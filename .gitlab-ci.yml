@@ -1,0 +1,21 @@
+default:
+  image: ubuntu:latest
+stages:
+  - deploy
+variables:
+  WORKING_DIR: $CI_PROJECT_DIR
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+
+production:
+  stage: deploy
+  script: |
+    which ssh > /dev/null || (apt-get update -qq && apt-get install -qq openssh-client)
+    which rsync > /dev/null || (apt-get update -qq && apt-get install -qq rsync)
+    mkdir -p ~/.ssh && chmod 0700 ~/.ssh
+    echo "$SSH_PRIVATE_KEY_B64" | base64 -d | tr -d '\r' > ~/.ssh/id_rsa && chmod 0600 ~/.ssh/id_rsa
+    cp $WORKING_DIR/.ssh/config ~/.ssh/config
+    rsync -ae "ssh -q -p $SSH_REMOTE_PORT" $WORKING_DIR ${SSH_REMOTE_USER}@${SSH_REMOTE_HOST}:${SSH_REMOTE_DIR}/ --exclude ".*" --exclude "production-server/"
+    ssh -q -p $SSH_REMOTE_PORT ${SSH_REMOTE_USER}@${SSH_REMOTE_HOST} /start.sh

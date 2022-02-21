@@ -1,0 +1,20 @@
+FROM ubuntu:latest
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get -qq update
+RUN apt-get -qq dist-upgrade
+RUN apt-get -qq autoclean
+RUN apt-get -qq autoremove
+RUN apt-get -qq install openssh-server openssh-sftp-server rsync curl unzip screen
+RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
+RUN mkdir -p /run/sshd
+RUN mkdir -p /root/.ssh
+ADD ./.ssh/sshd_config /etc/ssh/sshd_config
+ADD ./.ssh/authorized_keys /root/.ssh/authorized_keys
+ADD ./start.sh /start.sh
+ADD ./entrypoint.sh /entrypoint.sh
+RUN chmod 0700 /root/.ssh
+RUN chmod 0600 /root/.ssh/authorized_keys
+RUN chmod 0744 /start.sh
+RUN chmod 0744 /entrypoint.sh
+RUN ssh-keygen -A
+ENTRYPOINT bash -c "/entrypoint.sh"

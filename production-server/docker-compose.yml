@@ -1,0 +1,13 @@
+services:
+  production:
+    hostname: ci-cd-demo
+    container_name: ci-cd-demo
+    build: .
+    ports:
+      - "2222:22"
+      - "8080:80"
+    volumes:
+      - "www:/var/www"
+
+volumes:
+  www:
